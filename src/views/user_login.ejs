@@ -1,0 +1,106 @@
+<%- include('partials/header', { title: 'User Login' }) %>
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-lg border-0">
+            <div class="card-header text-center bg-primary text-white">
+                <div class="mb-2">
+                    <i class="bi bi-person-circle" style="font-size: 2.5rem;"></i>
+                </div>
+                <h3 class="mb-0">User Login</h3>
+            </div>
+            <div class="card-body">
+                <form id="user-login-form" autocomplete="off">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required autofocus>
+                    </div>
+                    <div class="mb-3 position-relative">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <button class="btn btn-outline-secondary" type="button" id="toggle-password" tabindex="-1">
+                                <i class="bi bi-eye" id="toggle-password-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <span id="login-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <span id="login-text">Login</span>
+                        </button>
+                    </div>
+                    <div id="error-message" class="alert alert-danger mt-3 d-none animate__animated animate__shakeX"></div>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-white">
+                <a href="/user/register">Don't have an account? Register</a>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <a href="/">Back to Home</a>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Icons CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<!-- Animate.css CDN for error animation -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<script>
+    const form = document.getElementById('user-login-form');
+    const errorMessage = document.getElementById('error-message');
+    const loginSpinner = document.getElementById('login-spinner');
+    const loginText = document.getElementById('login-text');
+    const passwordInput = document.getElementById('password');
+    const togglePasswordBtn = document.getElementById('toggle-password');
+    const togglePasswordIcon = document.getElementById('toggle-password-icon');
+
+    togglePasswordBtn.addEventListener('click', () => {
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            togglePasswordIcon.classList.remove('bi-eye');
+            togglePasswordIcon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            togglePasswordIcon.classList.remove('bi-eye-slash');
+            togglePasswordIcon.classList.add('bi-eye');
+        }
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorMessage.classList.add('d-none');
+        loginSpinner.classList.remove('d-none');
+        loginText.textContent = 'Logging in...';
+        const username = form.username.value;
+        const password = form.password.value;
+
+        try {
+            const response = await fetch('/api/auth/users/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed.');
+            }
+
+            localStorage.setItem('user_token', data.token);
+            window.location.href = '/user/chat';
+
+        } catch (error) {
+            errorMessage.textContent = error.message;
+            errorMessage.classList.remove('d-none');
+        } finally {
+            loginSpinner.classList.add('d-none');
+            loginText.textContent = 'Login';
+        }
+    });
+</script>
+
+<%- include('partials/footer') %>
